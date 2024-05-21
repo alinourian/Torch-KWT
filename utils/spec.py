@@ -18,6 +18,32 @@ from typing import Any, Optional, Union, Collection
 from librosa._typing import _WindowSpec, _PadMode, _PadModeSTFT
 
 
+def adaptive_mel_filter(bs, fm, audio_settings):
+    sr: float = audio_settings["sr"]
+    n_fft: int = audio_settings["n_fft"]
+    n_mels: int = audio_settings["n_mels"]
+    fmax = float(sr) / 2
+
+    weights = torch.zeros((bs, n_mels, int(1 + n_fft // 2)), dtype=torch.float32)
+    fftfreqs = torch.from_numpy(fft_frequencies(sr=sr, n_fft=n_fft))
+    fm, _ = torch.sort(fmax * fm)
+    mel_f = torch.cat((torch.zeros((bs, 1)), fm, fmax * torch.ones((bs, 1))), dim=1)
+    print(mel_f.shape)
+    
+    for bs_iter in range(bs):
+        fdiff = torch.diff(mel_f[bs_iter])
+        ramps = mel_f[bs_iter].reshape(-1, 1) - fftfreqs
+        for i in range(n_mels):
+            lower = -ramps[i] / fdiff[i]
+            upper = ramps[i + 2] / fdiff[i + 1]
+            weights[bs_iter, i] = torch.clamp(torch.minimum(lower, upper), min=0)
+
+        enorm = 2.0 / (mel_f[bs_iter, 2 : n_mels + 2] - mel_f[bs_iter, :n_mels])
+        weights[bs_iter] *= enorm[:, None]
+
+    return weights
+
+
 def mel_filter(
     *,
     sr: float = 16000,
@@ -25,16 +51,13 @@ def mel_filter(
     n_mels: int = 40,
     fmin: float = 0.0,
     fmax = None,
-    htk: bool = False,
-    norm = "slaney",
-    dtype = np.float32,
     ftype = 'linear',
 ) -> np.ndarray:
 
     if fmax is None:
         fmax = float(sr) / 2
 
-    weights = np.zeros((n_mels, int(1 + n_fft // 2)), dtype=np.float32)
+    weights = np.zeros((n_mels, int(1 + n_fft // 2)), dtype=torch.float32)
     fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
     mel_f = mel_frequencies(n_mels + 2, fmin=fmin, fmax=fmax, htk=False)
 
@@ -106,7 +129,7 @@ def mfcc_torch(
     n_fft: int = 2048,
 ):
     if mel_basis is None:
-        mel_basis = mel_filter(sr=sr, n_fft=n_fft, n_mels=n_mfcc, ftype='exp')
+        mel_basis = mel_filter(sr=sr, n_fft=n_fft, n_mels=n_mfcc, ftype='linear')
         mel_basis = torch.from_numpy(mel_basis).to('cuda')
 
     melspec = torch.einsum("...ft,...mf->...mt", S, mel_basis)

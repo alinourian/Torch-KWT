@@ -37,7 +37,6 @@ def mel_filter(
     weights = np.zeros((n_mels, int(1 + n_fft // 2)), dtype=np.float32)
     fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
     mel_f = mel_frequencies(n_mels + 2, fmin=fmin, fmax=fmax, htk=False)
-    print(mel_f)
 
     fdiff = np.diff(mel_f)
 

@@ -24,11 +24,10 @@ def adaptive_mel_filter(bs, fm, audio_settings):
     n_mels: int = audio_settings["n_mels"]
     fmax = float(sr) / 2
 
-    weights = torch.zeros((bs, n_mels, int(1 + n_fft // 2)), dtype=torch.float32)
-    fftfreqs = torch.from_numpy(fft_frequencies(sr=sr, n_fft=n_fft))
+    weights = torch.zeros((bs, n_mels, int(1 + n_fft // 2)), dtype=torch.float32, device='cuda')
+    fftfreqs = torch.from_numpy(fft_frequencies(sr=sr, n_fft=n_fft)).to('cuda')
     fm, _ = torch.sort(fmax * fm)
-    mel_f = torch.cat((torch.zeros((bs, 1)), fm, fmax * torch.ones((bs, 1))), dim=1)
-    print(mel_f.shape)
+    mel_f = torch.cat((torch.zeros((bs, 1), device='cuda'), fm, fmax * torch.ones((bs, 1), device='cuda')), dim=1)
     
     for bs_iter in range(bs):
         fdiff = torch.diff(mel_f[bs_iter])
@@ -57,7 +56,7 @@ def mel_filter(
     if fmax is None:
         fmax = float(sr) / 2
 
-    weights = np.zeros((n_mels, int(1 + n_fft // 2)), dtype=torch.float32)
+    weights = np.zeros((n_mels, int(1 + n_fft // 2)), dtype=np.float32)
     fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
     mel_f = mel_frequencies(n_mels + 2, fmin=fmin, fmax=fmax, htk=False)
 

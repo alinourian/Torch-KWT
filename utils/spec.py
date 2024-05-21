@@ -12,8 +12,53 @@ from torchaudio import functional as F
 
 from librosa.util.exceptions import ParameterError
 from librosa.core.spectrum import _spectrogram
+from librosa.core.convert import fft_frequencies, mel_frequencies
+
 from typing import Any, Optional, Union, Collection
 from librosa._typing import _WindowSpec, _PadMode, _PadModeSTFT
+
+
+def mel_filter(
+    *,
+    sr: float = 16000,
+    n_fft: int = 480,
+    n_mels: int = 40,
+    fmin: float = 0.0,
+    fmax = None,
+    htk: bool = False,
+    norm = "slaney",
+    dtype = np.float32,
+    ftype = 'linear',
+) -> np.ndarray:
+
+    if fmax is None:
+        fmax = float(sr) / 2
+
+    weights = np.zeros((n_mels, int(1 + n_fft // 2)), dtype=np.float32)
+    fftfreqs = fft_frequencies(sr=sr, n_fft=n_fft)
+    mel_f = mel_frequencies(n_mels + 2, fmin=fmin, fmax=fmax, htk=False)
+    print(mel_f)
+
+    fdiff = np.diff(mel_f)
+
+    if ftype == 'linear':
+        ramps = np.subtract.outer(mel_f, fftfreqs)
+
+        for i in range(n_mels):
+            # lower and upper slopes for all bins
+            lower = -ramps[i] / fdiff[i]
+            upper = ramps[i + 2] / fdiff[i + 1]
+
+            # .. then intersect them with each other and zero
+            weights[i] = np.maximum(0, np.minimum(lower, upper))
+    else:
+        for i in range(n_mels):
+            weights[i]  = np.exp(-(fftfreqs - mel_f[i+1]) ** 2 / (2 * (fdiff[i] / 3) ** 2))
+
+    enorm = 2.0 / (mel_f[2 : n_mels + 2] - mel_f[:n_mels])
+    weights *= enorm[:, np.newaxis]
+
+    return weights
 
 
 def power_to_db(
@@ -62,7 +107,8 @@ def mfcc_torch(
     n_fft: int = 2048,
 ):
     if mel_basis is None:
-        mel_basis = filters.mel(sr=sr, n_fft=n_fft, n_mels=n_mfcc).to('cuda')
+        mel_basis = mel_filter(sr=sr, n_fft=n_fft, n_mels=n_mfcc, ftype='exp')
+        mel_basis = torch.from_numpy(mel_basis).to('cuda')
 
     melspec = torch.einsum("...ft,...mf->...mt", S, mel_basis)
     S = power_to_db(melspec)

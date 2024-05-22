@@ -40,7 +40,7 @@ def adaptive_mel_filter(bs, fm, audio_settings):
         enorm = 2.0 / (mel_f[bs_iter, 2 : n_mels + 2] - mel_f[bs_iter, :n_mels])
         weights[bs_iter] *= enorm[:, None]
 
-    return weights
+    return weights[:, None, :, :]
 
 
 def mel_filter(
@@ -50,7 +50,6 @@ def mel_filter(
     n_mels: int = 40,
     fmin: float = 0.0,
     fmax = None,
-    ftype = 'linear',
 ) -> np.ndarray:
 
     if fmax is None:
@@ -62,19 +61,15 @@ def mel_filter(
 
     fdiff = np.diff(mel_f)
 
-    if ftype == 'linear':
-        ramps = np.subtract.outer(mel_f, fftfreqs)
+    ramps = np.subtract.outer(mel_f, fftfreqs)
 
-        for i in range(n_mels):
-            # lower and upper slopes for all bins
-            lower = -ramps[i] / fdiff[i]
-            upper = ramps[i + 2] / fdiff[i + 1]
+    for i in range(n_mels):
+        # lower and upper slopes for all bins
+        lower = -ramps[i] / fdiff[i]
+        upper = ramps[i + 2] / fdiff[i + 1]
 
-            # .. then intersect them with each other and zero
-            weights[i] = np.maximum(0, np.minimum(lower, upper))
-    else:
-        for i in range(n_mels):
-            weights[i]  = np.exp(-(fftfreqs - mel_f[i+1]) ** 2 / (2 * (fdiff[i] / 3) ** 2))
+        # .. then intersect them with each other and zero
+        weights[i] = np.maximum(0, np.minimum(lower, upper))
 
     enorm = 2.0 / (mel_f[2 : n_mels + 2] - mel_f[:n_mels])
     weights *= enorm[:, np.newaxis]
@@ -128,7 +123,7 @@ def mfcc_torch(
     n_fft: int = 2048,
 ):
     if mel_basis is None:
-        mel_basis = mel_filter(sr=sr, n_fft=n_fft, n_mels=n_mfcc, ftype='linear')
+        mel_basis = mel_filter(sr=sr, n_fft=n_fft, n_mels=n_mfcc)
         mel_basis = torch.from_numpy(mel_basis).to('cuda')
 
     melspec = torch.einsum("...ft,...mf->...mt", S, mel_basis)

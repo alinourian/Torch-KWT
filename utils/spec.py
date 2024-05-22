@@ -18,27 +18,25 @@ from typing import Any, Optional, Union, Collection
 from librosa._typing import _WindowSpec, _PadMode, _PadModeSTFT
 
 
-def adaptive_mel_filter(bs, fm, audio_settings):
+def adaptive_mel_filter(bs, fm, audio_settings, device='cuda'):
     sr: float = audio_settings["sr"]
     n_fft: int = audio_settings["n_fft"]
     n_mels: int = audio_settings["n_mels"]
     fmax = float(sr) / 2
 
-    weights = torch.zeros((bs, n_mels, int(1 + n_fft // 2)), dtype=torch.float32, device='cuda')
-    fftfreqs = torch.from_numpy(fft_frequencies(sr=sr, n_fft=n_fft)).to('cuda')
+    weights = torch.zeros((bs, n_mels, int(1 + n_fft // 2)), dtype=torch.float32, device=device)
+    fftfreqs = torch.from_numpy(fft_frequencies(sr=sr, n_fft=n_fft)).to(device)
     fm, _ = torch.sort(fmax * fm)
-    mel_f = torch.cat((torch.zeros((bs, 1), device='cuda'), fm, fmax * torch.ones((bs, 1), device='cuda')), dim=1)
-    
-    for bs_iter in range(bs):
-        fdiff = torch.diff(mel_f[bs_iter])
-        ramps = mel_f[bs_iter].reshape(-1, 1) - fftfreqs
-        for i in range(n_mels):
-            lower = -ramps[i] / fdiff[i]
-            upper = ramps[i + 2] / fdiff[i + 1]
-            weights[bs_iter, i] = torch.clamp(torch.minimum(lower, upper), min=0)
+    mel_f = torch.cat((torch.zeros((bs, 1), device=device), fm, fmax * torch.ones((bs, 1), device=device)), dim=1)
+    fdiff = torch.diff(mel_f, dim=1)
+    ramps = mel_f.unsqueeze(-1) - fftfreqs
 
-        enorm = 2.0 / (mel_f[bs_iter, 2 : n_mels + 2] - mel_f[bs_iter, :n_mels])
-        weights[bs_iter] *= enorm[:, None]
+    lower = -ramps[:, :-2] / fdiff[:, :-1, None]
+    upper = ramps[:, 2:] / fdiff[:, 1:, None]
+    weights = torch.clamp(torch.minimum(lower, upper), min=0)
+
+    enorm = 2.0 / (mel_f[:, 2 : n_mels + 2] - mel_f[:, :n_mels])
+    weights *= enorm[:, :, None]
 
     return weights[:, None, :, :]
 

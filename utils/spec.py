@@ -26,6 +26,7 @@ def adaptive_mel_filter(bs, fm, audio_settings, device='cuda'):
 
     weights = torch.zeros((bs, n_mels, int(1 + n_fft // 2)), dtype=torch.float32, device=device)
     fftfreqs = torch.from_numpy(fft_frequencies(sr=sr, n_fft=n_fft)).to(device)
+    fftfreqs = fftfreqs.type(torch.float32)
     fm, _ = torch.sort(fmax * fm)
     mel_f = torch.cat((torch.zeros((bs, 1), device=device), fm, fmax * torch.ones((bs, 1), device=device)), dim=1)
     fdiff = torch.diff(mel_f, dim=1)

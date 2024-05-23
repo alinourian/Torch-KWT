@@ -98,12 +98,6 @@ def train(net: nn.Module, optimizer: optim.Optimizer, criterion: Callable, train
 
         for batch_index, (data, targets) in enumerate(trainloader):
 
-            if schedulers["warmup"] is not None and epoch < config["hparams"]["scheduler"]["n_warmup"]:
-                schedulers["warmup"].step()
-
-            elif schedulers["scheduler"] is not None:
-                schedulers["scheduler"].step()
-
             ####################
             # optimization step
             ####################
@@ -111,6 +105,12 @@ def train(net: nn.Module, optimizer: optim.Optimizer, criterion: Callable, train
             loss, corr = train_single_batch(net, data, targets, optimizer, criterion, device)
             running_loss += loss
             correct += corr
+
+            if schedulers["warmup"] is not None and epoch < config["hparams"]["scheduler"]["n_warmup"]:
+                schedulers["warmup"].step()
+
+            elif schedulers["scheduler"] is not None:
+                schedulers["scheduler"].step()
 
             if not step % config["exp"]["log_freq"]:       
                 log_dict = {"epoch": epoch, "loss": loss, "lr": optimizer.param_groups[0]["lr"]}

@@ -115,7 +115,7 @@ def power_to_db(
 def mfcc_torch(
     *,
     mel_basis = None,
-    sr: float = 22050,
+    sr: float = 16000,
     S = None, 
     n_mfcc: int = 20,
     norm: Optional[str] = "ortho", 
@@ -138,7 +138,7 @@ def mfcc(
     *,
     mel_basis: Optional[np.ndarray] = None,
     y: Optional[np.ndarray] = None,
-    sr: float = 22050,
+    sr: float = 16000,
     S: Optional[np.ndarray] = None, 
     n_mfcc: int = 20,
     dct_type: int = 2,

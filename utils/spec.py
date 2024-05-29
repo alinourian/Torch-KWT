@@ -27,8 +27,8 @@ def adaptive_mel_filter(bs, fm, audio_settings, device='cuda'):
     weights = torch.zeros((bs, n_mels, int(1 + n_fft // 2)), dtype=torch.float32, device=device)
     fftfreqs = torch.from_numpy(fft_frequencies(sr=sr, n_fft=n_fft)).to(device)
     fftfreqs = fftfreqs.type(torch.float32)
-    fm, _ = torch.sort(fmax * fm)
-    mel_f = torch.cat((torch.zeros((bs, 1), device=device), fm, fmax * torch.ones((bs, 1), device=device)), dim=1)
+    fm_sorted, _ = torch.sort(fmax * fm)
+    mel_f = torch.cat((torch.zeros((bs, 1), device=device), fm_sorted, fmax * torch.ones((bs, 1), device=device)), dim=1)
     fdiff = torch.diff(mel_f, dim=1)
     ramps = mel_f.unsqueeze(-1) - fftfreqs
 
@@ -49,7 +49,7 @@ def mel_filter(
     n_mels: int = 40,
     fmin: float = 0.0,
     fmax = None,
-) -> np.ndarray:
+):
 
     if fmax is None:
         fmax = float(sr) / 2
@@ -119,21 +119,22 @@ def mfcc_torch(
     S = None, 
     n_mfcc: int = 20,
     norm: Optional[str] = "ortho", 
-    n_fft: int = 2048,
+    n_fft: int = 480,
+    device='cuda',
 ):
     if mel_basis is None:
         mel_basis = mel_filter(sr=sr, n_fft=n_fft, n_mels=n_mfcc)
-        mel_basis = torch.from_numpy(mel_basis).to('cuda')
+        mel_basis = torch.from_numpy(mel_basis).to(device)
 
     melspec = torch.einsum("...ft,...mf->...mt", S, mel_basis)
     S = power_to_db(melspec)
 
-    dct_mat = F.create_dct(n_mfcc, n_mfcc, norm).type(torch.float32).to('cuda')
+    dct_mat = F.create_dct(n_mfcc, n_mfcc, norm).type(torch.float32).to(device)
     M = torch.einsum('...fm,ft->...tm', S, dct_mat)
 
     return M
 
-
+# (def mfcc) not used!
 def mfcc(
     *,
     mel_basis: Optional[np.ndarray] = None,
@@ -144,7 +145,7 @@ def mfcc(
     dct_type: int = 2,
     norm: Optional[str] = "ortho", 
     lifter: float = 0,
-    n_fft: int = 2048,
+    n_fft: int = 480,
     **kwargs: Any,
 ) -> np.ndarray:
 
@@ -174,10 +175,10 @@ def mfcc(
 def melspectrogram(
     *,
     y: Optional[np.ndarray] = None,
-    sr: float = 22050,
+    sr: float = 16000,
     S: Optional[np.ndarray] = None,
-    n_fft: int = 2048,
-    hop_length: int = 512,
+    n_fft: int = 480,
+    hop_length: int = 160,
     win_length: Optional[int] = None,
     window: _WindowSpec = "hann",
     center: bool = True,

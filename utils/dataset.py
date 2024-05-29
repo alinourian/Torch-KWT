@@ -10,7 +10,7 @@ from tqdm import tqdm
 import multiprocessing as mp
 import json
 
-from utils.spec import melspectrogram, mfcc
+from utils.spec import melspectrogram
 from utils.augment import time_shift, resample, spec_augment
 from audiomentations import AddBackgroundNoise
 

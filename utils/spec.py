@@ -103,7 +103,7 @@ def power_to_db(
     amin: float = 1e-10,
     top_db: Optional[float] = 80.0,
 ):
-    S = torch.asarray(S)
+    # S = torch.asarray(S)
 
     if amin <= 0:
         raise ParameterError("amin must be strictly positive")

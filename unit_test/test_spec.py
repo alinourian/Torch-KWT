@@ -1,6 +1,7 @@
 import librosa
 import torch
-from utils.spec import melspectrogram, mfcc_torch, mel_filter, adaptive_mel_filter
+import torch.nn as nn
+from utils.spec import melspectrogram, mfcc_torch, mel_filter, adaptive_mel_filter2
 
 
 audio_settings = {
@@ -24,13 +25,22 @@ audio_settings = {
 #     n_mels = audio_settings["n_mels"]
 #     n_fft = audio_settings["n_fft"]
 #     bs = 512
-#     fm = torch.rand(bs, 40, device=device, dtype=torch.float32)
-#     filters = adaptive_mel_filter(bs, fm, audio_settings, device=device)
+#     fm = torch.rand(bs, 40, device=device, dtype=torch.float32, requires_grad=True)
+#     bw = torch.rand(bs, 40, device=device, dtype=torch.float32, requires_grad=True)
+#     mel_basis = adaptive_mel_filter2(bs, fm, bw, audio_settings, device=device)
 
-#     fm_sorted, _ = torch.sort(fm)
-#     filters_new = torch.zeros_like(filters)
-#     for i in range(bs):
-#         filters_new[i] = fm_sorted[i]
+#     path = 'yes.wav'
+#     x = librosa.load(path, sr=sr)[0]
+#     x = librosa.util.fix_length(x, size=sr)
+#     x_spec_torch = torch.from_numpy(melspectrogram(y=x, **audio_settings)).float().unsqueeze(0)
+#     x_mfcc_torch = mfcc_torch(S=x_spec_torch, n_mfcc=n_mels, n_fft=n_fft, mel_basis=mel_basis, device=device)
+
+#     x_spec = librosa.feature.melspectrogram(y=x, **audio_settings)        
+#     x_mfcc = librosa.feature.mfcc(S=librosa.power_to_db(x_spec), n_mfcc=n_mels)
+#     x_mfcc = torch.from_numpy(x_mfcc)
+
+#     criterion = nn.MSELoss()
+#     optimizer = optim.AdamW(net.parameters(), lr=0.001, weight_decay=0.1)
 
 
 def test_librosa_torch():
@@ -70,6 +80,7 @@ def test_librosa_torch():
     assert err_1 < 1e-6
     assert err_2 < 1e-6
     assert err_3 < 1e-6
+    print("test passed.")
 
 
 def compare2tensors(a, b):

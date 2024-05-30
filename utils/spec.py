@@ -18,21 +18,20 @@ from typing import Any, Optional, Union, Collection
 from librosa._typing import _WindowSpec, _PadMode, _PadModeSTFT
 
 
-def adaptive_mel_filter2(bs, fm, bw, audio_settings, device='cuda'):
+def adaptive_mel_filter2(bs, fm, bw, audio_settings, device='cpu'):
     sr: float = audio_settings["sr"]
     n_fft: int = audio_settings["n_fft"]
     n_mels: int = audio_settings["n_mels"]
     fmin = 0
     fm_max = float(sr) / 2
-    bw_max = 1000 / 6
+    bw_max = 5
 
     weights = torch.zeros((bs, n_mels, int(1 + n_fft // 2)), dtype=torch.float32, device=device)
-    fftfreqs = torch.from_numpy(fft_frequencies(sr=sr, n_fft=n_fft)).to(device)
-    fftfreqs = fftfreqs.type(torch.float32)
+    fftfreqs = torch.arange(0, n_fft // 2 + 1).type(torch.float32)
 
     # Vectorized computation of weights
-    bw_expanded = bw_max * bw[:, :, None]  # Shape: (bs, n_mels, 1)
-    fm_expanded = fm_max * fm[:, :, None]  # Shape: (bs, n_mels, 1)
+    bw_expanded = bw_max * bw[:, :, None] + 0.6 # Shape: (bs, n_mels, 1)
+    fm_expanded = (n_fft // 2 + 1) * fm[:, :, None]  # Shape: (bs, n_mels, 1)
     fftfreqs_expanded = fftfreqs[None, None, :]  # Shape: (1, 1, fft_size)
 
     weights = 1 / (torch.sqrt(2 * torch.pi * bw_expanded ** 2)) * torch.exp(-(fftfreqs_expanded - fm_expanded) ** 2 / (2 * bw_expanded ** 2))

@@ -144,11 +144,13 @@ class FilterAttention(nn.Module):
 
         self.fc_mean = nn.Sequential(
             nn.Flatten(),
+            nn.Dropout(0.1),
             nn.Linear(116, output_size),
             nn.Sigmoid(),
         )
         self.fc_std = nn.Sequential(
             nn.Flatten(),
+            nn.Dropout(0.1),
             nn.Linear(116, output_size),
             nn.Sigmoid(),
         )

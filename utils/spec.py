@@ -18,7 +18,7 @@ from typing import Any, Optional, Union, Collection
 from librosa._typing import _WindowSpec, _PadMode, _PadModeSTFT
 
 
-def adaptive_mel_filter2(bs, fm, bw, audio_settings, device='cpu'):
+def adaptive_mel_filter2(bs, fm, bw, audio_settings, device='cuda'):
     sr: float = audio_settings["sr"]
     n_fft: int = audio_settings["n_fft"]
     n_mels: int = audio_settings["n_mels"]

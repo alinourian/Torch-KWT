@@ -27,7 +27,7 @@ def adaptive_mel_filter2(bs, fm, bw, audio_settings, device='cuda'):
     bw_max = 5
 
     weights = torch.zeros((bs, n_mels, int(1 + n_fft // 2)), dtype=torch.float32, device=device)
-    fftfreqs = torch.arange(0, n_fft // 2 + 1).type(torch.float32)
+    fftfreqs = torch.arange(0, n_fft // 2 + 1,  device=device).type(torch.float32)
 
     # Vectorized computation of weights
     bw_expanded = bw_max * bw[:, :, None] + 0.6 # Shape: (bs, n_mels, 1)

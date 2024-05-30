@@ -11,7 +11,6 @@ audio_settings = {
     "win_length": 480,
     "hop_length": 160,
     "center": False,
-    "device": 'cuda'
 }
 
 
@@ -53,7 +52,7 @@ def test_librosa_torch():
 
     path = 'yes.wav'
     sr = audio_settings["sr"]
-    device = audio_settings["device"]
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     n_mels = audio_settings["n_mels"]
     n_fft = audio_settings["n_fft"]
 

@@ -129,7 +129,7 @@ class EncoderLayer(nn.Module):
 
 
 class FilterAttention(nn.Module):
-    def __init__(self, output_size=40, d_model=116, num_heads=2, num_layers=1, d_ff=128, max_seq_length=98, dropout=0.1):
+    def __init__(self, output_size=40, d_model=116, num_heads=1, num_layers=1, d_ff=128, max_seq_length=98, dropout=0.1):
         super(FilterAttention, self).__init__()
 
         self.encoder_layers = nn.ModuleList([EncoderLayer(d_model, num_heads, d_ff, dropout) for _ in range(num_layers)])

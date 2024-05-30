@@ -224,8 +224,8 @@ class KWT(nn.Module):
             fm, bw = self.filter_net(x.permute(0, 1, 3, 2))
             bs = fm.shape[0]
             # filters = self.create_filters(bs, fm, bw, do_norm=False)
-            # filters = adaptive_mel_filter(bs, fm, self.audio_settings, device=self.device)
-            filters = adaptive_mel_filter2(bs, fm, bw, self.audio_settings, device=self.device)
+            filters = adaptive_mel_filter(bs, fm, self.audio_settings, device=self.device)
+            # filters = adaptive_mel_filter2(bs, fm, bw, self.audio_settings, device=self.device)
             x = mfcc_torch(S=x, n_mfcc=self.audio_settings["n_mels"], n_fft=self.audio_settings["n_fft"], mel_basis=filters)
         elif self.model_mode == 2:
             x = mfcc_torch(S=x, n_mfcc=self.audio_settings["n_mels"], n_fft=self.audio_settings["n_fft"]) # using custom mfcc filters

@@ -2,7 +2,7 @@ import torch
 from torch import nn, optim
 from typing import Callable, Tuple
 from torch.utils.data import DataLoader
-from utils.misc import log, save_model
+from utils.misc import log, save_model, save_last_model
 import os
 import time
 from tqdm import tqdm
@@ -147,3 +147,4 @@ def train(net: nn.Module, optimizer: optim.Optimizer, criterion: Callable, train
     # save final ckpt
     save_path = os.path.join(config["exp"]["save_dir"], "last.pth")
     save_model(epoch, val_acc, save_path, net, optimizer, log_file)
+    save_last_model(net)

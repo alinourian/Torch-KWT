@@ -123,4 +123,20 @@ def save_model(epoch: int, val_acc: float, save_path: str, net: nn.Module, optim
     if log_file is not None:
         with open(log_file, "a+") as f:
             f.write(log_message + "\n")
+
+
+def save_last_model(net: nn.Module) -> None:
+    """Saves checkpoint.
+
+    Args:
+        save_path (str): Checkpoint path.
+        net (nn.Module): Model instance.
+    """
+
+
+    torch.save(net, 'last_model_v1.pth')
+    torch.save(net, 'last_model_v2.pt')
+    torch.save(net.state_dict(), 'last_model_dict_v1.pth')
+    torch.save(net.state_dict(), 'last_model_dict_v2.pt')
+    print("saved all")
     

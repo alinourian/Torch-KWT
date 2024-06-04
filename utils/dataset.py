@@ -162,7 +162,21 @@ class GoogleSpeechDataset(Dataset):
 
 
 def cache_item_loader(path: str, sr: int, cache_level: int, audio_settings: dict, model_mode: int = 0) -> np.ndarray:
-    x = librosa.load(path, sr=sr)[0]
+    x_split = path.split('__')
+    if x_split[0] == 'Ndb':
+        snr = x_split[1]
+        path = x_split[2]
+
+        x = librosa.load(path, sr=sr)[0]
+
+        s2n_ratio = 10 ** (snr / 10)
+        noise_power = np.sum(x ** 2) / s2n_ratio
+        noise = np.random.normal(0, np.sqrt(noise_power), len(x))
+        x += noise
+    
+    else:
+        x = librosa.load(path, sr=sr)[0]
+
     if cache_level == 2:
         x = librosa.util.fix_length(x, size=sr)
 

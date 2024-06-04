@@ -19,7 +19,7 @@ import random
 import time
 
 
-def caching_pipeline(config):
+def caching_pipeline(config, noises: list = None, aug_val=False):
     #####################################
     # initialize training items
     #####################################
@@ -30,6 +30,17 @@ def caching_pipeline(config):
     
     with open(config["val_list_file"], "r") as f:
         val_list = f.read().rstrip().split("\n")
+    
+    if noises is not None:
+        for noise in noises:
+            aug_train_list = [f'Ndb__{noise}__' + x for x in train_list]
+            train_list += aug_train_list
+
+            if aug_val:
+                aug_val_list = [f'Ndb__{noise}__' + x for x in val_list]
+                val_list += aug_val_list
+            
+            print(f'noise {noise}db is added.')
 
     trainloader = get_loader(train_list, config, train=True)
     valloader = get_loader(val_list, config, train=False)

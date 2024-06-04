@@ -32,15 +32,18 @@ def caching_pipeline(config, noises: list = None, aug_val=False):
         val_list = f.read().rstrip().split("\n")
     
     if noises is not None:
+        aug_train_list = []
+        aug_val_list = []
         for noise in noises:
-            aug_train_list = [f'Noise_db__{noise}__' + x for x in train_list]
-            train_list += aug_train_list
+            aug_train_list += [f'Noise_db___{noise}___' + x for x in train_list]
 
             if aug_val:
-                aug_val_list = [f'Ndb__{noise}__' + x for x in val_list]
-                val_list += aug_val_list
-            
-            print(f'noise {noise}db is added.')
+                aug_val_list += [f'Noise_db___{noise}___' + x for x in val_list]
+        
+        print(f'noise {noise}db is added.')
+        
+        train_list += aug_train_list
+        val_list += aug_val_list
 
     trainloader = get_loader(train_list, config, train=True)
     valloader = get_loader(val_list, config, train=False)

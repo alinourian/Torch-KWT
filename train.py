@@ -33,7 +33,7 @@ def caching_pipeline(config, noises: list = None, aug_val=False):
     
     if noises is not None:
         for noise in noises:
-            aug_train_list = [f'Ndb__{noise}__' + x for x in train_list]
+            aug_train_list = [f'Noise_db__{noise}__' + x for x in train_list]
             train_list += aug_train_list
 
             if aug_val:

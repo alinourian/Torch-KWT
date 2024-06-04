@@ -163,7 +163,7 @@ class GoogleSpeechDataset(Dataset):
 
 def cache_item_loader(path: str, sr: int, cache_level: int, audio_settings: dict, model_mode: int = 0) -> np.ndarray:
     x_split = path.split('__')
-    if x_split[0] == 'Ndb':
+    if x_split[0] == 'Noise_db':
         snr = int(x_split[1])
         path = x_split[2]
 
